@@ -49,7 +49,7 @@
         </q-table>
 
         <!-- create dialog -->
-        <!-- <q-dialog v-model="create_dialog" transition-show="flip-down" transition-hide="flip-up">
+        <q-dialog v-model="create_dialog" transition-show="flip-down" transition-hide="flip-up">
             <q-card style="width: 900px; max-width: 80vw;">
                 <q-card-section class="bg-indigo-6">
                 <div class="text-h6">View Invoice Details</div>
@@ -201,7 +201,7 @@
                 <q-btn flat label="Close" color="primary" @click="closeArray()" />
                 </q-card-actions>
             </q-card>
-        </q-dialog> -->
+        </q-dialog>
 
         <!-- view dialog -->
         <q-dialog v-model="view_dialog" transition-show="flip-down" transition-hide="flip-up">
@@ -344,12 +344,11 @@
         </q-dialog>
 
 
-        <!-- store & update dialog -->
+        <!-- update dialog -->
         <q-dialog v-model="update_dialog" transition-show="flip-down" transition-hide="flip-up">
             <q-card style="width: 900px; max-width: 80vw;">
-                <q-card-section v-bind:class="isCreate == true ?  'bg-green-6' : 'bg-blue-6'">
-                <div v-if="!isCreate" class="text-h6 text-white">Update Master Details</div>
-                <div v-if="isCreate" class="text-h6 text-white">Create Master Details</div>
+                <q-card-section class="bg-yellow-6">
+                <div class="text-h6">Update Master Details</div>
                 </q-card-section>
                 <q-card-section style="padding-top: 16px;">
                     <div class="text-center text-h4">
@@ -376,9 +375,6 @@
                                                     padding: '0'
                                                 }"
                                             />
-                                            <q-tooltip v-if="errors.sold_to" content-class="bg-red" anchor="top left" self="center left" >
-                                                {{ errors.sold_to_message }}
-                                            </q-tooltip>
                                         </td>
                                     </tr>
                                     <tr>
@@ -394,9 +390,6 @@
                                                     padding: '0'
                                                 }"
                                             />
-                                            <q-tooltip v-if="errors.business_style" content-class="bg-red" anchor="top left" self="center left" >
-                                                {{ errors.business_style_message }}
-                                            </q-tooltip>
                                         </td>
                                         <td class="text-body1 text-center" style="width: 11%;">Date: </td>
                                         <td class="invoice-input text-body1 text-left" style="width: 29%; border-bottom: 1px solid black">
@@ -434,9 +427,6 @@
                                                     padding: '0'
                                                 }"
                                             />
-                                            <q-tooltip v-if="errors.address" content-class="bg-red" anchor="top left" self="center left" >
-                                                {{ errors.address_message }}
-                                            </q-tooltip>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -463,7 +453,7 @@
                                     :error=description[index]
                                     />
                                     <q-tooltip v-if="description[index]" content-class="bg-red" anchor="top left" self="center left" >
-                                        {{ description[index + '_message'] }}
+                                        Here I am!
                                     </q-tooltip>
                                 </td>
                                 <td>
@@ -472,31 +462,17 @@
                                     @keyup="computeTotal"
                                     :error=quantity[index]
                                     />
-                                    <q-tooltip v-if="quantity[index]" content-class="bg-red" anchor="top left" self="center left" >
-                                        {{ quantity[index + '_message'] }}
-                                    </q-tooltip>
                                 </td>
-                                <td class="formattedin">
-                                    <formatted-component v-model="line.price"></formatted-component>
-      <!-- <q-input
-        filled
-        v-model="price"
-        label="Price with 2 decimals"
-        mask="#.##"
-        fill-mask="0"
-        reverse-fill-mask
-        hint="Mask: #.##"
-        input-class="text-right"
-      /> -->
-
-
-                                    <q-tooltip v-if="price[index]" content-class="bg-red" anchor="top left" self="center left" >
-                                        {{ price[index + '_message'] }}
-                                    </q-tooltip>
+                                <td>
+                                    <q-input
+                                    v-model="line.price"
+                                    @keyup="computeTotal"
+                                    :error=price[index]
+                                    />
                                 </td>
-                                <td class="text-right">
+                                <td>
                                     <span class="text-subtitle1 text-blue-10">
-                                        {{ products(line.quantity, line.price) }}
+                                        {{ line.quantity * line.price }}
                                     </span>
                                 </td>
                                 <td class="text-center">
@@ -514,8 +490,7 @@
                     <q-btn color="positive" icon="add" size="sm" @click="addLine" label="Add new record"/>                    
                 </q-card-section>
                 <q-card-actions align="right">
-                <q-btn flat v-if="!isCreate" label="Update" color="teal" @click="updateArray()"/>
-                <q-btn flat v-if="isCreate" label="Save" color="teal" @click="saveArray()"/>
+                <q-btn flat label="OK" color="teal" @click="updateArray()"/>
                 <q-btn flat label="Close" color="primary" @click="closeArray()" />
                 </q-card-actions>
             </q-card>
@@ -526,67 +501,9 @@
 
 <script>
 import axios from "axios";
-
-
-
-var fcomponent = {
-    props: ["value"],
-    template: `
-        <div>
-            <q-input v-model="displayValue" @keyup="computeTotal()" input-class="text-right" input-style="height: 24px !important;"reverse-fill-mask @blur="isInputActive = false" @focus="isInputActive = true"/>
-        </div>`,
-    data: function() {
-        return {
-            isInputActive: false
-        }
-    },
-    computed: {
-        displayValue: {
-            get: function() {
-                if (this.isInputActive) {
-                    // Cursor is inside the input field. unformat display value for user
-                    return this.value.toString()
-                } else {
-                    // User is not modifying now. Format display value for user interface
-                    console.log(this.value);
-
-                    if(this.value == null) {
-                        // this.value = 0;
-                        // return "₱ " + this.value.toFixed(2).replace(/(\d)(?=(\d{3})+(?:\.\d+)?$)/g, "$1,")
-                        return this.value;
-                    } else {
-                        return "₱ " + this.value.toFixed(2).replace(/(\d)(?=(\d{3})+(?:\.\d+)?$)/g, "$1,")
-                        // return 'louie'
-                    }
-                    
-                }
-            },
-            set: function(modifiedValue) {
-                // Recalculate value after ignoring "$" and "," in user input
-                let newValue = parseFloat(modifiedValue.replace(/[^\d\.]/g, ""))
-                // Ensure that it is not NaN
-                if (isNaN(newValue)) {
-                    newValue = 0
-                }
-                // Note: we cannot set this.value as it is a "prop". It needs to be passed to parent component
-                // $emit the event so that parent component gets it
-                this.$emit('input', newValue)
-            }
-        }
-    }
-};
-
-
-
-
-
-
-
-
 export default {
     data() {
         return {
-            isCreate: true,
             loading: false,
             filter: "",
             data: [],
@@ -645,15 +562,9 @@ export default {
             payment: {}
         }
     },
-    components: {
-        'formatted-component': fcomponent
-    },
     methods: {
         onCreate() {
-            this.clearErrors();
-            this.clearInputs();
-            this.isCreate = true;
-            this.update_dialog = true;
+            this.create_dialog = true;
             this.addLine();
         },
         // execCreate() {
@@ -684,7 +595,6 @@ export default {
 
         },
         onUpdate(row) {
-            this.isCreate = false;
             this.update_dialog = true;
             this.invoiceDetails.id = row.id;
             this.invoiceDetails.sold_to = row.sold_to;
@@ -698,7 +608,6 @@ export default {
             this.payment.amount = row.payment.amount;
             this.payment.status_id = row.payment.status_id;
 
-
             var today = new Date(row.created_at);
             var current_year = today.getFullYear();
             var current_month = (today.getMonth() + 1) < 10 ? ('0' + (today.getMonth() + 1)) : (today.getMonth() + 1);
@@ -708,16 +617,13 @@ export default {
             this.invoiceDetails.created_at = date;
 
             var x;
-            var total = 0;
             for (x in row.items) {
                 this.addLine();
                 this.lines[x]['id'] = row.items[x]['id'];
                 this.lines[x]['description'] = row.items[x]['description'];
                 this.lines[x]['quantity'] = row.items[x]['quantity'];
                 this.lines[x]['price'] = row.items[x]['price'];
-                total += row.items[x]['quantity'] * row.items[x]['price'];
             }
-            this.grand_total = "₱ " + total.toFixed(2).replace(/(\d)(?=(\d{3})+(?:\.\d+)?$)/g, "$1,");
 
             console.log(this.lines);
 
@@ -776,17 +682,11 @@ export default {
             }
         },
         computeTotal() {
-            var total = 0;
+            this.grand_total = 0;
             var x;
             for(x in this.lines) {
-                total += this.lines[x]['quantity'] * this.lines[x]['price'];
+                this.grand_total += this.lines[x]['quantity'] * this.lines[x]['price'];
             }
-
-            if(isNaN(total)) {
-                return this.grand_total = 'Input not valid.';
-            }
-            
-            this.grand_total = "₱ " + total.toFixed(2).replace(/(\d)(?=(\d{3})+(?:\.\d+)?$)/g, "$1,")
         },
         closeView() {
             this.clearErrors();
@@ -796,6 +696,7 @@ export default {
         closeArray() {
             this.clearErrors();
             this.clearInputs();
+            this.create_dialog = false;
             this.update_dialog = false;
         },
         clearErrors() {
@@ -831,7 +732,7 @@ export default {
                 invoice: this.invoiceDetails, lines: this.lines, 
             }))
             .then(response => {
-                this.update_dialog = false;
+                this.create_dialog = false;
                 this.clearInputs();
             })
             .then(response=> {
@@ -853,24 +754,20 @@ export default {
                     var subkey = key.split('.');
                     if(subkey[0] == 'invoice') {
                         errors[subkey[1]] = error_logs.hasOwnProperty(key);
-                        errors[subkey[1] + '_message'] = error.response.data.errors[key][0];
+                        // errors[subkey[1] + '_message'] = error.response.data.errors[key][0];
                     }
                     if(subkey[0] == 'lines') {
                         if(subkey[2] == 'description') {
                             this.description[subkey[1]] = error_logs.hasOwnProperty(key);
-                            this.description[subkey[1] + '_message'] = error.response.data.errors[key][0];
                         }
                         if(subkey[2] == 'quantity') {
                             this.quantity[subkey[1]] = error_logs.hasOwnProperty(key);
-                            this.quantity[subkey[1] + '_message'] = error.response.data.errors[key][0];
                         }
                         if(subkey[2] == 'price') {
                             this.price[subkey[1]] = error_logs.hasOwnProperty(key);
-                            this.price[subkey[1] + '_message'] = error.response.data.errors[key][0];
                         }
                     }
                 }
-                console.log(errors);
                 this.errors = errors;
             }); 
         },
@@ -904,67 +801,30 @@ export default {
                 this.clearInputs();
             })
             .catch(error => { 
-                console.log(error.response.data.errors);
+                console.log(error)
                 var error_logs = error.response.data.errors;
                 var errors = [];
                 for (var key in error_logs) {
                     var subkey = key.split('.');
                     if(subkey[0] == 'invoice') {
                         errors[subkey[1]] = error_logs.hasOwnProperty(key);
-                        errors[subkey[1] + '_message'] = error.response.data.errors[key][0];
+                        // errors[subkey[1] + '_message'] = error.response.data.errors[key][0];
                     }
                     if(subkey[0] == 'lines') {
                         if(subkey[2] == 'description') {
                             this.description[subkey[1]] = error_logs.hasOwnProperty(key);
-                            this.description[subkey[1] + '_message'] = error.response.data.errors[key][0];
                         }
                         if(subkey[2] == 'quantity') {
                             this.quantity[subkey[1]] = error_logs.hasOwnProperty(key);
-                            this.quantity[subkey[1] + '_message'] = error.response.data.errors[key][0];
                         }
                         if(subkey[2] == 'price') {
                             this.price[subkey[1]] = error_logs.hasOwnProperty(key);
-                            this.price[subkey[1] + '_message'] = error.response.data.errors[key][0];
                         }
                     }
                 }
                 this.errors = errors;
             }); 
         },
-        products(quantity, price) {
-            if(isNaN(quantity * price)) {
-                return 'Input not valid.';
-            } else {
-                var prod = quantity * price;
-                // return prod.toFixed(2).replace(/(\d)(?=(\d{3})+(?:\.\d+)?$)/g, "$1,")
-                return "₱ " + prod.toFixed(2).replace(/(\d)(?=(\d{3})+(?:\.\d+)?$)/g, "$1,");
-            }
-        },
-        // formatMoney(n, c, d, t) {
-        //     var c = isNaN(c = Math.abs(c)) ? 2 : c,
-        //         d = d == undefined ? "." : d,
-        //         t = t == undefined ? "," : t,
-        //         s = n < 0 ? "-" : "",
-        //         i = String(parseInt(n = Math.abs(Number(n) || 0).toFixed(c))),
-        //         j = (j = i.length) > 3 ? j % 3 : 0;
-
-        //     return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
-        // },
-        formatMoney(amount, decimalCount = 2, decimal = ".", thousands = ",") {
-            try {
-                decimalCount = Math.abs(decimalCount);
-                decimalCount = isNaN(decimalCount) ? 2 : decimalCount;
-
-                const negativeSign = amount < 0 ? "-" : "";
-
-                let i = parseInt(amount = Math.abs(Number(amount) || 0).toFixed(decimalCount)).toString();
-                let j = (i.length > 3) ? i.length % 3 : 0;
-
-                return negativeSign + (j ? i.substr(0, j) + thousands : '') + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands) + (decimalCount ? decimal + Math.abs(amount - i).toFixed(decimalCount).slice(2) : "");
-            } catch (e) {
-                console.log(e)
-            }
-        }
 
     },
     created() {
